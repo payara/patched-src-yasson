@@ -1,5 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2015, 2019 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 and Eclipse Distribution License v. 1.0
  * which accompanies this distribution.
@@ -135,6 +136,10 @@ public class Marshaller extends ProcessingContext implements SerializationContex
      */
     @SuppressWarnings("unchecked")
     public <T> void serializeRoot(T root, JsonGenerator generator) {
+        if (root == null) {
+            getJsonbContext().getConfigProperties().getNullSerializer().serialize(null, generator, this);
+            return;
+        }
         final JsonbSerializer<T> rootSerializer = (JsonbSerializer<T>) getRootSerializer(root.getClass());
         if (jsonbContext.getConfigProperties().isStrictIJson() &&
                 rootSerializer instanceof AbstractValueTypeSerializer) {
