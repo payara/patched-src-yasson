@@ -1,5 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2017, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019 Payara Foundation and/or its affiliates. All rights reserved.
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 and Eclipse Distribution License v. 1.0
  * which accompanies this distribution.
@@ -24,6 +25,7 @@ import org.eclipse.yasson.internal.model.customization.ordering.ReverseOrderStra
 import org.eclipse.yasson.internal.properties.MessageKeys;
 import org.eclipse.yasson.internal.properties.Messages;
 import org.eclipse.yasson.internal.serializer.JsonbDateFormatter;
+import org.eclipse.yasson.internal.serializer.NullSerializer;
 
 import javax.json.bind.JsonbConfig;
 import javax.json.bind.JsonbException;
@@ -32,6 +34,7 @@ import javax.json.bind.config.BinaryDataStrategy;
 import javax.json.bind.config.PropertyNamingStrategy;
 import javax.json.bind.config.PropertyOrderStrategy;
 import javax.json.bind.config.PropertyVisibilityStrategy;
+import javax.json.bind.serializer.JsonbSerializer;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
@@ -75,6 +78,8 @@ public class JsonbConfigProperties {
 
     private final Class<?> defaultMapImplType;
 
+    private final JsonbSerializer<Object> nullSerializer;
+
     public JsonbConfigProperties(JsonbConfig jsonbConfig) {
         this.jsonbConfig = jsonbConfig;
         this.binaryDataStrategy = initBinaryDataStrategy();
@@ -89,7 +94,9 @@ public class JsonbConfigProperties {
         this.userTypeMapping = initUserTypeMapping();
         this.zeroTimeDefaulting = initZeroTimeDefaultingForJavaTime();
         this.defaultMapImplType = initDefaultMapImplType();
+        this.nullSerializer = initNullSerializer();
     }
+
 
     private Class<?> initDefaultMapImplType() {
         Optional<String> os = getPropertyOrderStrategy();
@@ -233,6 +240,18 @@ public class JsonbConfigProperties {
 
     private boolean initConfigFailOnUnknownProperties() {
         return getBooleanConfigProperty(YassonProperties.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
+    private JsonbSerializer<Object> initNullSerializer() {
+        Optional<Object> property = jsonbConfig.getProperty(YassonProperties.NULL_ROOT_SERIALIZER);
+        if (!property.isPresent()) {
+            return new NullSerializer();
+        }
+        Object nullSerializer = property.get();
+        if (!(nullSerializer instanceof JsonbSerializer)) {
+            throw new JsonbException("YassonConfig.NULL_ROOT_SERIALIZER must be instance of " + JsonbSerializer.class + "<Object>");
+        }
+        return (JsonbSerializer<Object>) nullSerializer;
     }
 
     /**
@@ -386,5 +405,9 @@ public class JsonbConfigProperties {
      */
     public Class<?> getDefaultMapImplType() {
         return defaultMapImplType;
+    }
+
+    public JsonbSerializer<Object> getNullSerializer() {
+        return nullSerializer;
     }
 }
