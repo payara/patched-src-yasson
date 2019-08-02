@@ -1,5 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019 Oracle and/or its affiliates and others.
+ * All rights reserved.
+ * 
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 and Eclipse Distribution License v. 1.0
  * which accompanies this distribution.
@@ -8,7 +10,9 @@
  * http://www.eclipse.org/org/documents/edl-v10.php.
  *
  * Contributors:
- * Roman Grigoriadi
+ *  Roman Grigoriadi
+ *  Sebastien Rius
+ *  Payara Services - Corrected recursive serialiser functionality
  ******************************************************************************/
 
 package org.eclipse.yasson.serializers;
@@ -28,6 +32,26 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import static org.junit.Assert.*;
+
+import javax.json.bind.config.PropertyOrderStrategy;
+
+import org.eclipse.yasson.TestTypeToken;
+import org.eclipse.yasson.serializers.model.AnnotatedWithSerializerType;
+import org.eclipse.yasson.serializers.model.Author;
+import org.eclipse.yasson.serializers.model.Box;
+import org.eclipse.yasson.serializers.model.BoxWithAnnotations;
+import org.eclipse.yasson.serializers.model.Crate;
+import org.eclipse.yasson.serializers.model.CrateDeserializer;
+import org.eclipse.yasson.serializers.model.CrateDeserializerWithConversion;
+import org.eclipse.yasson.serializers.model.CrateInner;
+import org.eclipse.yasson.serializers.model.CrateJsonObjectDeserializer;
+import org.eclipse.yasson.serializers.model.CrateSerializer;
+import org.eclipse.yasson.serializers.model.CrateSerializerWithConversion;
+import org.eclipse.yasson.serializers.model.RecursiveDeserializer;
+import org.eclipse.yasson.serializers.model.RecursiveSerializer;
+import org.eclipse.yasson.serializers.model.SimpleAnnotatedSerializedArrayContainer;
+import org.eclipse.yasson.serializers.model.SimpleContainer;
+import org.eclipse.yasson.serializers.model.StringWrapper;
 
 /**
  * @author Roman Grigoriadi
@@ -251,15 +275,14 @@ public class SerializersTest {
      */
     @Test
     public void testRecursiveSerializer() {
-        Jsonb jsonb = JsonbBuilder.create(new JsonbConfig().withSerializers(new RecursiveSerializer()).withDeserializers(new RecursiveDeserializer()));
+        Jsonb jsonb = JsonbBuilder
+                .create(new JsonbConfig()
+                        .withSerializers(new RecursiveSerializer())
+                .withDeserializers(new RecursiveDeserializer()));
 
         Box box = new Box();
         box.boxStr = "Box to serialize";
-        try {
-            jsonb.toJson(box);
-            fail();
-        } catch (JsonbException ex) {
-        }
+        assertEquals("{\"boxFieldName\":{\"boxStr\":\"Box to serialize\"}}", jsonb.toJson(box));
 
         try {
             jsonb.fromJson("{\"boxStr\":\"Box to deserialize\"}", Box.class);
