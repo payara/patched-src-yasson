@@ -1,5 +1,7 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019 Oracle and/or its affiliates and others.
+ * All rights reserved.
+ * 
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v1.0 and Eclipse Distribution License v. 1.0
  * which accompanies this distribution.
@@ -8,7 +10,8 @@
  * http://www.eclipse.org/org/documents/edl-v10.php.
  *
  * Contributors:
- * Roman Grigoriadi
+ *  Roman Grigoriadi
+ *  Payara Services - Added default serialiser to user serializer
  ******************************************************************************/
 package org.eclipse.yasson.internal.model;
 
@@ -112,7 +115,7 @@ public class PropertyModel implements Comparable<PropertyModel> {
             return new AdaptedObjectSerializer<>(classModel, customization.getAdapterBinding());
         }
         if (customization.getSerializerBinding() != null) {
-            return new UserSerializerSerializer<>(classModel, customization.getSerializerBinding().getJsonbSerializer());
+            return new UserSerializerSerializer<>(customization.getSerializerBinding().getJsonbSerializer(), new ObjectSerializer<>(null, propertyType, classModel));
         }
 
         final Class<?> propertyRawType = ReflectionUtils.getRawType(serializationType);
@@ -151,7 +154,7 @@ public class PropertyModel implements Comparable<PropertyModel> {
     }
 
     private SerializerBinding<?> getUserSerializerBinding(Property property, JsonbContext jsonbContext) {
-        final SerializerBinding serializerBinding = jsonbContext.getAnnotationIntrospector().getSerializerBinding(property);
+        final SerializerBinding<?> serializerBinding = jsonbContext.getAnnotationIntrospector().getSerializerBinding(property);
         if (serializerBinding != null) {
             return serializerBinding;
         }
